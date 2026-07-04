@@ -287,29 +287,7 @@ _create-release-pr:
 	@echo "Creating pull request..."
 	@gh pr create \
 		--title "Release v$(VERSION)" \
-		--body "$$(cat <<-EOF\n\
-		## Release v$(VERSION)\n\
-		\n\
-		This PR prepares the release of version $(VERSION).\n\
-		\n\
-		### Checklist\n\
-		\n\
-		- [ ] CI checks pass (make static + integration tests)\n\
-		- [ ] Version updated in Cargo.toml\n\
-		- [ ] RELEASE_NOTES.md updated (if applicable)\n\
-		- [ ] Documentation reviewed\n\
-		\n\
-		### After Merge\n\
-		\n\
-		When this PR is merged to main:\n\
-		1. GitHub Actions will **automatically** create and push tag v$(VERSION)\n\
-		2. The tag push will trigger the release workflow\n\
-		3. Release workflow will build binaries (Linux x86_64, macOS ARM)\n\
-		4. GitHub release will be created with all assets\n\
-		\n\
-		**No manual tagging step required!**\n\
-		EOF\n\
-		)"
+		--body "## Release v$(VERSION)\n\nThis PR prepares the release of version $(VERSION).\n\n### Checklist\n\n- [ ] CI checks pass (make static + integration tests)\n- [ ] Version updated in Cargo.toml\n- [ ] RELEASE_NOTES.md updated (if applicable)\n- [ ] Documentation reviewed\n\n### After Merge\n\nWhen this PR is merged to main:\n1. GitHub Actions will **automatically** create and push tag v$(VERSION)\n2. The tag push will trigger the release workflow\n3. Release workflow will build binaries (Linux x86_64, macOS ARM)\n4. GitHub release will be created with all assets\n\n**No manual tagging step required!**"
 	@echo ""
 	@echo "✓✓✓ Release PR created! ✓✓✓"
 	@echo ""
