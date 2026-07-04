@@ -63,7 +63,8 @@ pub fn render_host_table(
 
             Row::new(vec![
                 Cell::from(host.hostname.clone()),
-                Cell::from(host.status.short_indicator()).style(Style::default().fg(host.status.color())),
+                Cell::from(host.status.short_indicator())
+                    .style(Style::default().fg(host.status.color())),
                 Cell::from(format_latency(host.metrics.avg_latency)),
                 Cell::from(format_latency(host.metrics.min_latency)),
                 Cell::from(format_latency(host.metrics.max_latency)),

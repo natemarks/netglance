@@ -35,30 +35,34 @@ fn main() {
 
     // Embed as environment variables for use in the binary
     println!("cargo:rustc-env=GIT_HASH={}", git_hash_with_dirty);
-    println!("cargo:rustc-env=BUILD_VERSION={}", env!("CARGO_PKG_VERSION"));
+    println!(
+        "cargo:rustc-env=BUILD_VERSION={}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Fail build if git is dirty (for release builds only)
-    if std::env::var("PROFILE").unwrap_or_default() == "release" && is_dirty {
-        if std::env::var("NETGLANCE_ALLOW_DIRTY").is_err() {
-            panic!(
-                "\n\n\
-                ╔═══════════════════════════════════════════════════════════════╗\n\
-                ║              BUILD FAILED: UNCLEAN GIT STATE                 ║\n\
-                ╚═══════════════════════════════════════════════════════════════╝\n\
-                \n\
-                Release builds require a clean git working directory.\n\
-                \n\
-                You have uncommitted changes:\n\
-                \n\
-                Run 'git status' to see changes.\n\
-                \n\
-                To build with uncommitted changes (not recommended):\n\
-                  NETGLANCE_ALLOW_DIRTY=1 cargo build --release\n\
-                \n\
-                For releases, commit or stash your changes first.\n\
-                "
-            );
-        }
+    if std::env::var("PROFILE").unwrap_or_default() == "release"
+        && is_dirty
+        && std::env::var("NETGLANCE_ALLOW_DIRTY").is_err()
+    {
+        panic!(
+            "\n\n\
+            ╔═══════════════════════════════════════════════════════════════╗\n\
+            ║              BUILD FAILED: UNCLEAN GIT STATE                 ║\n\
+            ╚═══════════════════════════════════════════════════════════════╝\n\
+            \n\
+            Release builds require a clean git working directory.\n\
+            \n\
+            You have uncommitted changes:\n\
+            \n\
+            Run 'git status' to see changes.\n\
+            \n\
+            To build with uncommitted changes (not recommended):\n\
+              NETGLANCE_ALLOW_DIRTY=1 cargo build --release\n\
+            \n\
+            For releases, commit or stash your changes first.\n\
+            "
+        );
     }
 
     // Re-run if git state changes

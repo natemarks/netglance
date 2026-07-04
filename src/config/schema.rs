@@ -142,7 +142,6 @@ impl ConfigFile {
         Ok(())
     }
 
-
     /// Convert to internal `ProbeConfig`.
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
@@ -294,12 +293,12 @@ mod tests {
 
         // Test lower boundary (1 second)
         config.probe.interval_seconds = 1;
-        config.probe.timeout_seconds = 0;  // Timeout < interval
+        config.probe.timeout_seconds = 0; // Timeout < interval
         assert!(ConfigValidator::validate(&config).is_ok());
 
         // Test upper boundary (60 seconds)
         config.probe.interval_seconds = 60;
-        config.probe.timeout_seconds = 59;  // Timeout < interval
+        config.probe.timeout_seconds = 59; // Timeout < interval
         assert!(ConfigValidator::validate(&config).is_ok());
     }
 }

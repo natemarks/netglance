@@ -8,6 +8,8 @@ pub mod scheduler;
 pub mod worker;
 
 // Public re-exports for library API
-pub use dns::resolve_address;
 pub use scheduler::ProbeScheduler;
+
+// Re-exported for library users and tests, not used by binary
+#[allow(unused_imports)]
 pub use worker::probe_tcp;
