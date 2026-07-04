@@ -8,8 +8,11 @@ This guide explains how to release new versions of netglance.
 # Create a release
 make release VERSION=0.3.0
 
-# After PR merges, tag is created automatically
-# Monitor: gh run watch
+# After PR merges, manually create and push tag
+git tag -a v0.3.0 -m "Release v0.3.0" && git push origin v0.3.0
+
+# Monitor release workflow
+gh run watch
 ```
 
 ---
@@ -110,20 +113,29 @@ Next steps:
    - ✓ Gitleaks secret scanning
 3. Merge the PR (squash or merge commit)
 
-### Step 4: Automatic Tagging and Release
+### Step 4: Manual Tagging and Release
 
-**After merge, GitHub Actions automatically:**
-1. Detects the "Bump version to 0.2.1" commit
-2. Extracts version from `Cargo.toml` → `0.2.1`
-3. Creates annotated tag `v0.2.1`
-4. Pushes tag to GitHub
-5. Tag push triggers release workflow
+**After merge, manually create and push the tag:**
+```bash
+# Switch to main and pull the merged changes
+git checkout main
+git pull
+
+# Create and push annotated tag
+git tag -a v0.2.1 -m "Release v0.2.1"
+git push origin v0.2.1
+
+# Watch the release workflow
+gh run watch
+```
+
+**What happens:**
+1. Tag push triggers release workflow
+2. Binaries are built for Linux and macOS
+3. GitHub release is created with all assets
 
 **Monitor progress:**
 ```bash
-# Watch the workflows
-gh run watch
-
 # Check when complete
 gh release view v0.2.1
 ```
@@ -251,27 +263,17 @@ gh run view <RUN_ID> --log
 
 ---
 
-## Advanced: Manual Tagging (Not Recommended)
+## Why Manual Tagging?
 
-If automatic tagging fails, you can manually create the tag:
+**GitHub Actions security feature:** When a workflow uses `GITHUB_TOKEN` to push tags, it intentionally does NOT trigger other workflows. This prevents infinite workflow loops.
 
-```bash
-# On main, after release PR is merged
-git checkout main
-git pull
+**The problem with automatic tagging:**
+1. Release PR merges → triggers auto-tag workflow
+2. Auto-tag creates tag using `GITHUB_TOKEN`
+3. Tag push **doesn't trigger** release workflow ❌
+4. No binaries are built
 
-# Create and push tag
-git tag -a v0.2.1 -m "Release v0.2.1"
-git push origin v0.2.1
-
-# This triggers the release workflow
-gh run watch
-```
-
-**Note:** This should rarely be needed. Automatic tagging should work if:
-- Commit message contains "Bump version to"
-- `Cargo.toml` contains the correct version
-- Tag doesn't already exist
+**The solution:** Manual tagging from your local machine DOES trigger the release workflow because it's not coming from GitHub Actions.
 
 ---
 
@@ -291,12 +293,12 @@ Developer               GitHub                  CI/CD
     | Merge PR             |                      |
     |--------------------->|                      |
     |                      |                      |
-    |                      | Trigger: auto-tag    |
-    |                      |--------------------->|
+    | git checkout main    |                      |
+    | git pull             |                      |
     |                      |                      |
-    |                      | Detects version bump |
-    |                      | Creates tag v0.2.1   |
-    |                      |<---------------------|
+    | git tag -a v0.2.1    |                      |
+    | git push origin v*   |                      |
+    |--------------------->|                      |
     |                      |                      |
     |                      | Trigger: release     |
     |                      |--------------------->|
@@ -324,20 +326,13 @@ Developer               GitHub                  CI/CD
 - `integration-tests` job: Only on release PRs
 - `build` job: `make build-release`
 
-**3. Auto-Tag Workflow** (`.github/workflows/auto-tag.yml`)
-- Triggers on push to main that modifies `Cargo.toml`
-- Only runs if commit message contains "Bump version to"
-- Extracts version from `Cargo.toml`
-- Creates annotated tag `vX.Y.Z`
-- Pushes tag
-
-**4. Release Workflow** (`.github/workflows/release.yml`)
+**3. Release Workflow** (`.github/workflows/release.yml`)
 - Triggers on tag push matching `v*`
 - Builds binaries for Linux x86_64 and macOS ARM
 - Generates SHA256 checksums
 - Creates GitHub release with all assets
 
-**5. Gitleaks Workflow** (`.github/workflows/gitleaks.yml`)
+**4. Gitleaks Workflow** (`.github/workflows/gitleaks.yml`)
 - Runs on all PRs
 - Scans for secrets in commit history
 - Fails PR if secrets detected
@@ -575,18 +570,6 @@ cargo build
 4. **all-checks**
    - Waits for required jobs
    - Reports final status
-
-### `auto-tag.yml` - Automatic Tagging
-**Trigger:** Push to main that modifies `Cargo.toml`
-
-**Conditions:**
-- Commit message contains "Bump version to"
-
-**Steps:**
-1. Extract version from `Cargo.toml`
-2. Check if tag exists (skip if yes)
-3. Create annotated tag `vX.Y.Z`
-4. Push tag to GitHub
 
 ### `release.yml` - Release Build
 **Trigger:** Tag push matching `v*`
