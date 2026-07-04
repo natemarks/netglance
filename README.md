@@ -428,13 +428,14 @@ The release process will:
 5. Push to GitHub
 6. Create GitHub release with binary
 
-## Security
+## Security & Quality
 
-netglance uses **gitleaks** to prevent secrets from being committed:
+netglance uses pre-commit hooks to maintain code quality and security:
 
-- **Pre-commit hook:** Scans staged changes before commit
-- **GitHub Actions:** Scans all PRs and pushes
-- **Configured via:** `.gitleaks.toml`
+- **Gitleaks:** Scans for secrets (API keys, tokens, credentials)
+- **Static Analysis:** Format, lint, tests, security audit
+- **GitHub Actions:** Runs same checks on all PRs
+- **Configured via:** `.gitleaks.toml`, `Makefile`
 
 **Setup:**
 ```bash
@@ -442,11 +443,11 @@ netglance uses **gitleaks** to prevent secrets from being committed:
 brew install gitleaks  # macOS
 # or see: https://github.com/gitleaks/gitleaks#installing
 
-# Install pre-commit hook
+# Install pre-commit hook (runs gitleaks + make static)
 make install-hooks
 ```
 
-See [`docs/SETUP.md`](docs/SETUP.md) for detailed security setup.
+See [`docs/SETUP.md`](docs/SETUP.md) for detailed setup.
 
 ## Contributing
 

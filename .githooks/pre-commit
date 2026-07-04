@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pre-commit hook for netglance
-# Runs gitleaks to prevent secrets from being committed
+# Runs gitleaks and make static to prevent issues from being committed
 
 set -e
 
@@ -8,11 +8,19 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}🔍 Running gitleaks secret scan...${NC}"
+FAILED=0
 
-# Check if gitleaks is installed
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║              Pre-commit Checks                               ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# Check 1: Gitleaks
+echo -e "${YELLOW}[1/2] Running gitleaks secret scan...${NC}"
+
 if ! command -v gitleaks &> /dev/null; then
     echo -e "${RED}✗ Error: gitleaks not installed${NC}"
     echo ""
@@ -25,10 +33,8 @@ if ! command -v gitleaks &> /dev/null; then
     exit 1
 fi
 
-# Run gitleaks on staged changes
 if gitleaks protect --verbose --staged; then
     echo -e "${GREEN}✓ No secrets detected${NC}"
-    exit 0
 else
     echo ""
     echo -e "${RED}✗ Secrets detected in staged changes!${NC}"
@@ -36,6 +42,41 @@ else
     echo "Fix the issues above, or if this is a false positive:"
     echo "  1. Add an allowlist entry to .gitleaks.toml"
     echo "  2. Or skip this hook: git commit --no-verify"
+    FAILED=1
+fi
+
+echo ""
+
+# Check 2: Static Analysis
+echo -e "${YELLOW}[2/2] Running static analysis (format, lint, tests)...${NC}"
+
+if make static; then
+    echo -e "${GREEN}✓ Static analysis passed${NC}"
+else
     echo ""
+    echo -e "${RED}✗ Static analysis failed!${NC}"
+    echo ""
+    echo "Fix the issues above. Common fixes:"
+    echo "  make fmt     - Format code"
+    echo "  make clippy  - Check linting issues"
+    echo "  make test    - Run tests"
+    echo ""
+    echo "Or skip this hook (not recommended):"
+    echo "  git commit --no-verify"
+    FAILED=1
+fi
+
+echo ""
+
+# Summary
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║              ✓ All Pre-commit Checks Passed                  ║${NC}"
+    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
+    exit 0
+else
+    echo -e "${RED}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║              ✗ Pre-commit Checks Failed                      ║${NC}"
+    echo -e "${RED}╚══════════════════════════════════════════════════════════════╝${NC}"
     exit 1
 fi

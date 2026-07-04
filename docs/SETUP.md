@@ -184,9 +184,20 @@ git commit --no-verify -m "Your changes"
 ```
 
 **What the hook checks:**
-- Scans staged changes for secrets using gitleaks
-- Detects AWS keys, GitHub tokens, private keys, API keys, etc.
-- Prevents accidental commits of credentials
+
+1. **Gitleaks (Secret Scanning)**
+   - Scans staged changes for secrets
+   - Detects AWS keys, GitHub tokens, private keys, API keys, etc.
+   - Prevents accidental commits of credentials
+
+2. **Static Analysis (`make static`)**
+   - Code formatting (`make fmt-check`)
+   - Linting (`make clippy-basic`)
+   - Dead code detection
+   - Unit tests
+   - Security audit (`cargo audit`)
+
+**Note:** The hook runs the same checks that CI runs, catching issues before you push.
 
 **If gitleaks detects a secret:**
 1. Review the detection - is it a real secret?

@@ -751,15 +751,17 @@ If a release has critical issues:
 - [ ] Download and test binaries
 - [ ] Announce release (if applicable)
 
-### Security Checklist
+### Security & Quality Checklist
 
 - [ ] Pre-commit hook installed (`make install-hooks`)
+- [ ] Pre-commit hook runs gitleaks + make static automatically
 - [ ] Never commit with `--no-verify` unless certain
 - [ ] Review gitleaks output carefully
 - [ ] Add false positives to `.gitleaks.toml` allowlist
 - [ ] Run `make test-gitleaks` periodically
 - [ ] Update dependencies regularly (Dependabot PRs)
 - [ ] Review `make audit` output
+- [ ] All commits pass local static checks before push
 
 ---
 
