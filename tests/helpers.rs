@@ -41,8 +41,7 @@ impl TestServer {
     /// Panics if unable to bind to a port or start the server task.
     /// This is appropriate for test code.
     pub fn start() -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .expect("Failed to bind test server");
+        let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind test server");
         let addr = listener
             .local_addr()
             .expect("Failed to get local address")
@@ -55,8 +54,8 @@ impl TestServer {
         let cancel_clone = cancel.clone();
 
         let handle = tokio::spawn(async move {
-            let listener = TokioTcpListener::from_std(listener)
-                .expect("Failed to convert to tokio listener");
+            let listener =
+                TokioTcpListener::from_std(listener).expect("Failed to convert to tokio listener");
 
             loop {
                 tokio::select! {
@@ -140,7 +139,11 @@ mod tests {
         let server2 = TestServer::start();
 
         // Both should have different addresses
-        assert_ne!(server1.addr(), server2.addr(), "Servers should use different ports");
+        assert_ne!(
+            server1.addr(),
+            server2.addr(),
+            "Servers should use different ports"
+        );
 
         // Both should accept connections
         let result1 = tokio::net::TcpStream::connect(server1.addr()).await;

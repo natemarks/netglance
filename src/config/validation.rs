@@ -1,7 +1,7 @@
 //! Configuration validation with helpful error messages.
 
-use anyhow::{bail, Result};
 use super::schema::ConfigFile;
+use anyhow::{bail, Result};
 
 pub struct ConfigValidator;
 
@@ -79,7 +79,10 @@ impl ConfigValidator {
         // Validate each host
         for (idx, host) in config.hosts.iter().enumerate() {
             if host.name.is_empty() {
-                bail!("Host #{} has empty name. Please provide a descriptive name.", idx + 1);
+                bail!(
+                    "Host #{} has empty name. Please provide a descriptive name.",
+                    idx + 1
+                );
             }
 
             if host.address.is_empty() {
@@ -90,7 +93,9 @@ impl ConfigValidator {
                 bail!(
                     "Host #{} ({}) has invalid port: {}\n\
                      Port must be between 1 and 65535.",
-                    idx + 1, host.name, host.port
+                    idx + 1,
+                    host.name,
+                    host.port
                 );
             }
         }
@@ -128,14 +133,12 @@ mod tests {
                 timeout_seconds: 3,
                 window_minutes: 10,
             },
-            hosts: vec![
-                HostConfig {
-                    name: "Test Host".to_string(),
-                    address: "127.0.0.1".to_string(),
-                    port: 80,
-                    enabled: true,
-                },
-            ],
+            hosts: vec![HostConfig {
+                name: "Test Host".to_string(),
+                address: "127.0.0.1".to_string(),
+                port: 80,
+                enabled: true,
+            }],
             logging: LoggingSettings {
                 level: "info".to_string(),
             },
@@ -155,7 +158,10 @@ mod tests {
         config.probe.interval_seconds = 0;
         let result = ConfigValidator::validate(&config);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Invalid probe interval"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid probe interval"));
     }
 
     #[test]
@@ -164,7 +170,10 @@ mod tests {
         config.probe.interval_seconds = 61;
         let result = ConfigValidator::validate(&config);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Invalid probe interval"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid probe interval"));
     }
 
     #[test]
@@ -174,7 +183,10 @@ mod tests {
         config.probe.interval_seconds = 5;
         let result = ConfigValidator::validate(&config);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Invalid timing configuration"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid timing configuration"));
     }
 
     #[test]
@@ -183,7 +195,10 @@ mod tests {
         config.hosts.clear();
         let result = ConfigValidator::validate(&config);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("No hosts configured"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("No hosts configured"));
     }
 
     #[test]
@@ -217,6 +232,9 @@ mod tests {
         config.logging.level = "invalid".to_string();
         let result = ConfigValidator::validate(&config);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Invalid log level"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid log level"));
     }
 }
