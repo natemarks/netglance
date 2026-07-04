@@ -70,8 +70,7 @@ jobs:
   all-checks:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [static-analysis, build]
-    # integration-tests is optional, so don't block on it
+    needs: [static-analysis, build, integration-tests]
     if: always()
     steps:
       - name: Check required jobs
