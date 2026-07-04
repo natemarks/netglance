@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: help all build build-debug build-release build-optimized run check clean clean-all
 .PHONY: test unit-test integration-test fmt fmt-check clippy clippy-basic doc static static-full ci pre-commit
 .PHONY: dead-code unused-deps audit deny bloat
@@ -340,9 +342,9 @@ tag-release: ## Tag and push release (run after merging release PR)
 	echo "  2. Push tag to GitHub"; \
 	echo "  3. Trigger release workflow"; \
 	echo ""; \
-	read -p "Continue? [y/N] " -n 1 -r REPLY; \
+	read -p "Continue? [y/N] " -r REPLY; \
 	echo ""; \
-	if [ "$$REPLY" != "y" ] && [ "$$REPLY" != "Y" ]; then \
+	if [[ "$$REPLY" != "y" ]] && [[ "$$REPLY" != "Y" ]]; then \
 		echo "Aborted."; \
 		exit 1; \
 	fi; \
