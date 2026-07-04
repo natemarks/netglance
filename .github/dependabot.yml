@@ -1,0 +1,55 @@
+version: 2
+updates:
+  # Cargo dependencies
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    groups:
+      # Async runtime and utilities
+      async-runtime:
+        patterns:
+          - "tokio*"
+          - "futures*"
+      # TUI framework packages
+      tui-framework:
+        patterns:
+          - "ratatui"
+          - "crossterm"
+      # Logging and tracing
+      logging:
+        patterns:
+          - "tracing*"
+          - "log"
+      # Development tools
+      dev-tools:
+        patterns:
+          - "clap*"
+          - "anyhow"
+          - "thiserror"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"

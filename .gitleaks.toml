@@ -1,0 +1,133 @@
+# Gitleaks Configuration
+# Prevents secrets and credentials from being committed
+
+title = "Gitleaks Configuration for netglance"
+
+[extend]
+# Use the default gitleaks rules as a base
+useDefault = true
+
+[allowlist]
+description = "Allowlist for known false positives"
+
+# Example commit hashes, test data, and documentation
+regexes = [
+  # Example SHA256 hashes in documentation
+  '''(?i)(example|sample|test|dummy|fake).*[a-f0-9]{64}''',
+  # Test API keys that are clearly labeled
+  '''(?i)(test|fake|dummy|example)(_)?api(_)?key''',
+  # Documentation URLs that look like secrets
+  '''https?://.*example\.(com|org|net)''',
+]
+
+# Specific files to ignore
+paths = [
+  # Lock files and dependencies
+  '''.*\.lock$''',
+  '''go\.sum$''',
+  '''package-lock\.json$''',
+  '''yarn\.lock$''',
+  # Test data and fixtures
+  '''.*/testdata/.*''',
+  '''.*/fixtures/.*''',
+  '''.*/test_.*\.json$''',
+  # Documentation
+  '''.*\.md$''',  # Be careful with this - only if you're confident docs won't have secrets
+]
+
+# Additional rules for common secrets
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''(?i)(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["aws", "credentials"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]'''
+tags = ["aws", "credentials"]
+
+[[rules]]
+id = "aws-session-token"
+description = "AWS Session Token"
+regex = '''(?i)aws(.{0,20})?session(.{0,20})?token(.{0,20})?['\"][a-zA-Z0-9\/+=]{100,}['\"]'''
+tags = ["aws", "credentials"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''ghp_[0-9a-zA-Z]{36}|gho_[0-9a-zA-Z]{36}|ghu_[0-9a-zA-Z]{36}|ghs_[0-9a-zA-Z]{36}|ghr_[0-9a-zA-Z]{36}'''
+tags = ["github", "token"]
+
+[[rules]]
+id = "github-fine-grained-token"
+description = "GitHub Fine-Grained Personal Access Token"
+regex = '''github_pat_[0-9a-zA-Z_]{82}'''
+tags = ["github", "token"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key (RSA, DSA, EC, etc.)"
+regex = '''-----BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY-----'''
+tags = ["private-key", "credentials"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|access[_-]?key)(.{0,20})?['\"]([0-9a-zA-Z\-_]{32,})['\"]'''
+tags = ["api-key", "credentials"]
+
+[[rules]]
+id = "slack-token"
+description = "Slack Token"
+regex = '''xox[baprs]-[0-9a-zA-Z]{10,72}'''
+tags = ["slack", "token"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook URL"
+regex = '''https://hooks\.slack\.com/services/T[a-zA-Z0-9_]{8,}/B[a-zA-Z0-9_]{8,}/[a-zA-Z0-9_]{24,}'''
+tags = ["slack", "webhook"]
+
+[[rules]]
+id = "high-entropy-base64"
+description = "High entropy base64 string (potential secret)"
+regex = '''(?i)(secret|token|key|password|passwd|pwd|api[_-]?key)(.{0,20})?['\"]([A-Za-z0-9+/]{40,}={0,2})['\"]'''
+entropy = 4.5
+tags = ["entropy", "base64"]
+
+[[rules]]
+id = "high-entropy-hex"
+description = "High entropy hex string (potential secret)"
+regex = '''(?i)(secret|token|key|password|passwd|pwd|api[_-]?key)(.{0,20})?['\"]([a-fA-F0-9]{32,})['\"]'''
+entropy = 4.0
+tags = ["entropy", "hex"]
+
+[[rules]]
+id = "jwt-token"
+description = "JSON Web Token"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+tags = ["jwt", "token"]
+
+[[rules]]
+id = "connection-string"
+description = "Database Connection String"
+regex = '''(?i)(mongodb|mysql|postgres|postgresql|jdbc|odbc):\/\/[^\s'"]+:[^\s'"]+@[^\s'"]+'''
+tags = ["database", "credentials"]
+
+[[rules]]
+id = "password-in-url"
+description = "Password in URL"
+regex = '''[a-zA-Z]{3,10}:\/\/[^:\/\s]+:[^@\/\s]+@[^\/\s]+'''
+tags = ["credentials", "url"]
+
+# Entropy configuration
+[entropy]
+# Enable entropy scanning for detecting random strings that might be secrets
+enabled = true
+# Minimum entropy level (3.0 is moderate, 4.0 is high)
+# Lower values catch more but increase false positives
+threshold = 4.0
+# Group size for entropy calculation
+group = 4

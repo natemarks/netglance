@@ -1,0 +1,8 @@
+# Gitleaks ignore patterns
+# Add file paths or patterns to ignore specific false positives
+# Format: file:rule:lineNumber or file:rule (for entire file)
+#
+# Examples:
+# path/to/file.rs:generic-api-key:42
+# tests/**/*.rs:generic-api-key
+# docs/examples/*.md

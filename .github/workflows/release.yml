@@ -1,0 +1,159 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            platform: linux-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: darwin-aarch64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare binary
+        run: |
+          cd target/${{ matrix.target }}/release
+          BINARY_NAME="netglance-${{ steps.get_version.outputs.VERSION }}-${{ matrix.platform }}"
+          cp netglance "$BINARY_NAME"
+          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
+
+      - name: Generate SHA256 checksum
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sha256sum "$BINARY_NAME" > "$BINARY_NAME.sha256"
+          else
+            shasum -a 256 "$BINARY_NAME" > "$BINARY_NAME.sha256"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}
+          path: |
+            target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}
+            target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}.sha256
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create checksums file
+        run: |
+          cd artifacts
+          cat netglance-*/netglance-*.sha256 > ../checksums.txt
+          cd ..
+          echo "Created checksums.txt:"
+          cat checksums.txt
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create release notes
+          cat > release_notes.md << 'EOF'
+          ## Installation
+
+          Download the binary for your platform:
+
+          ### Linux (x86_64)
+          ```bash
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.TAG }}/netglance-${{ steps.get_version.outputs.VERSION }}-linux-x86_64
+          chmod +x netglance-${{ steps.get_version.outputs.VERSION }}-linux-x86_64
+          sudo mv netglance-${{ steps.get_version.outputs.VERSION }}-linux-x86_64 /usr/local/bin/netglance
+          ```
+
+          ### macOS (Apple Silicon)
+          ```bash
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.TAG }}/netglance-${{ steps.get_version.outputs.VERSION }}-darwin-aarch64
+          chmod +x netglance-${{ steps.get_version.outputs.VERSION }}-darwin-aarch64
+          sudo mv netglance-${{ steps.get_version.outputs.VERSION }}-darwin-aarch64 /usr/local/bin/netglance
+          ```
+
+          ### Verify Download
+          ```bash
+          # Download checksums
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.TAG }}/checksums.txt
+
+          # Verify (Linux)
+          sha256sum -c checksums.txt --ignore-missing
+
+          # Verify (macOS)
+          shasum -a 256 -c checksums.txt --ignore-missing
+          ```
+
+          ## Quick Start
+
+          ```bash
+          # Generate config file
+          netglance --init-config
+
+          # Edit config
+          vim ~/.netglance/settings.json
+
+          # Start monitoring
+          netglance
+          ```
+
+          ## Documentation
+
+          - [README](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Architecture](https://github.com/${{ github.repository }}/blob/main/docs/ARCHITECTURE.md)
+          - [Development Guide](https://github.com/${{ github.repository }}/blob/main/docs/DEVELOPMENT.md)
+
+          EOF
+
+          # Create release with gh CLI
+          gh release create ${{ steps.get_version.outputs.TAG }} \
+            --title "netglance ${{ steps.get_version.outputs.TAG }}" \
+            --notes-file release_notes.md \
+            artifacts/netglance-*/netglance-* \
+            checksums.txt
