@@ -2,7 +2,7 @@
 .PHONY: test unit-test integration-test fmt fmt-check clippy clippy-basic doc static static-full ci pre-commit
 .PHONY: dead-code unused-deps audit deny bloat
 .PHONY: install-hooks uninstall-hooks test-gitleaks test-dependabot-pr
-.PHONY: release _check-prerequisites _check-main-branch _check-git-clean _validate-semver _create-release-pr
+.PHONY: release tag-release _check-prerequisites _check-main-branch _check-git-clean _validate-semver _create-release-pr _extract-version
 
 .DEFAULT_GOAL := help
 
@@ -299,13 +299,19 @@ _create-release-pr:
 		"" \
 		"### After Merge" \
 		"" \
-		"When this PR is merged to main:" \
-		"1. GitHub Actions will **automatically** create and push tag v$(VERSION)" \
-		"2. The tag push will trigger the release workflow" \
-		"3. Release workflow will build binaries (Linux x86_64, macOS ARM)" \
-		"4. GitHub release will be created with all assets" \
+		"When this PR is merged to main, create and push the tag:" \
 		"" \
-		"**No manual tagging step required!**" \
+		"\`\`\`bash" \
+		"make tag-release" \
+		"\`\`\`" \
+		"" \
+		"This will:" \
+		"1. Create annotated tag v$(VERSION)" \
+		"2. Push tag to GitHub" \
+		"3. Trigger release workflow" \
+		"4. Build binaries (Linux x86_64, macOS ARM)" \
+		"5. Create GitHub release with all assets" \
+		"" \
 		| gh pr create --title "Release v$(VERSION)" --body-file -
 	@echo ""
 	@echo "✓✓✓ Release PR created! ✓✓✓"
@@ -315,4 +321,48 @@ _create-release-pr:
 	@echo "Next steps:"
 	@echo "  1. Review the PR and wait for CI checks to pass"
 	@echo "  2. Merge the PR when ready"
-	@echo "  3. Tag will be created automatically - monitor with: gh run watch"
+	@echo "  3. Run: make tag-release"
+
+tag-release: ## Tag and push release (run after merging release PR)
+	@$(MAKE) _check-prerequisites
+	@$(MAKE) _check-main-branch
+	@$(MAKE) _extract-version
+	@echo ""
+	@echo "╔══════════════════════════════════════════════════════════════╗"
+	@echo "║              Tagging Release                                 ║"
+	@echo "╚══════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@VERSION=$$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \
+	echo "Detected version: $$VERSION from Cargo.toml"; \
+	echo ""; \
+	echo "This will:"; \
+	echo "  1. Create annotated tag v$$VERSION"; \
+	echo "  2. Push tag to GitHub"; \
+	echo "  3. Trigger release workflow"; \
+	echo ""; \
+	read -p "Continue? [y/N] " -n 1 -r REPLY; \
+	echo ""; \
+	if [ "$$REPLY" != "y" ] && [ "$$REPLY" != "Y" ]; then \
+		echo "Aborted."; \
+		exit 1; \
+	fi; \
+	echo ""; \
+	echo "Creating and pushing tag v$$VERSION..."; \
+	git tag -a "v$$VERSION" -m "Release v$$VERSION"; \
+	git push origin "v$$VERSION"; \
+	echo ""; \
+	echo "✓✓✓ Tag v$$VERSION pushed! ✓✓✓"; \
+	echo ""; \
+	echo "Monitor release workflow:"; \
+	echo "  gh run watch"; \
+	echo ""; \
+	echo "View release when complete:"; \
+	echo "  gh release view v$$VERSION --web"
+
+# Internal: Extract version from Cargo.toml
+_extract-version:
+	@VERSION=$$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'); \
+	if [ -z "$$VERSION" ]; then \
+		echo "✗ Error: Could not extract version from Cargo.toml"; \
+		exit 1; \
+	fi

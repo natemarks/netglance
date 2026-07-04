@@ -8,11 +8,11 @@ This guide explains how to release new versions of netglance.
 # Create a release
 make release VERSION=0.3.0
 
-# After PR merges, manually create and push tag
-git tag -a v0.3.0 -m "Release v0.3.0" && git push origin v0.3.0
+# After PR merges, tag the release
+make tag-release
 
-# Monitor release workflow
-gh run watch
+# Or manually:
+# git tag -a v0.3.0 -m "Release v0.3.0" && git push origin v0.3.0
 ```
 
 ---
@@ -113,29 +113,41 @@ Next steps:
    - ✓ Gitleaks secret scanning
 3. Merge the PR (squash or merge commit)
 
-### Step 4: Manual Tagging and Release
+### Step 4: Tag and Publish Release
 
-**After merge, manually create and push the tag:**
+**After merge, tag the release:**
 ```bash
 # Switch to main and pull the merged changes
 git checkout main
 git pull
 
-# Create and push annotated tag
-git tag -a v0.2.1 -m "Release v0.2.1"
-git push origin v0.2.1
-
-# Watch the release workflow
-gh run watch
+# Tag the release (automated)
+make tag-release
 ```
 
-**What happens:**
+**What `make tag-release` does:**
+1. Detects version from `Cargo.toml` → `0.2.1`
+2. Confirms with you before proceeding
+3. Creates annotated tag `v0.2.1`
+4. Pushes tag to GitHub
+5. Shows commands to monitor progress
+
+**Alternatively, tag manually:**
+```bash
+git tag -a v0.2.1 -m "Release v0.2.1"
+git push origin v0.2.1
+```
+
+**What happens next:**
 1. Tag push triggers release workflow
 2. Binaries are built for Linux and macOS
 3. GitHub release is created with all assets
 
 **Monitor progress:**
 ```bash
+# Watch the workflow
+gh run watch
+
 # Check when complete
 gh release view v0.2.1
 ```
@@ -544,6 +556,7 @@ cargo build
 | Target | Description |
 |--------|-------------|
 | `make release VERSION=X.Y.Z` | Create release PR |
+| `make tag-release` | Tag and push release (after PR merges) |
 | `make ci` | Run full CI suite locally |
 
 ---
