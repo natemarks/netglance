@@ -2,8 +2,6 @@ name: Gitleaks
 
 on:
   pull_request:
-  push:
-    branches: [ main, master, develop ]
 
 jobs:
   scan:
@@ -11,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@d9a77d731dd228b0f9f4fc36c54202de35c4dd1e  # v2.3.7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
