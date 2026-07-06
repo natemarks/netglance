@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             platform: linux-x86_64
           - os: macos-latest
             target: aarch64-apple-darwin
@@ -32,6 +32,12 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Install musl tools (Linux only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336a9b35a  # stable
@@ -100,6 +106,17 @@ jobs:
         run: |
           # Create release notes
           cat > release_notes.md << 'EOF'
+          ## Linux Compatibility
+
+          This release uses a statically-linked musl binary that runs on any modern Linux distribution:
+          - ✅ Ubuntu 20.04, 22.04, 24.04+
+          - ✅ Debian 10, 11, 12+
+          - ✅ CentOS/RHEL 7, 8, 9+
+          - ✅ Alpine Linux
+          - ✅ Amazon Linux 2, 2023+
+
+          **No GLIBC version checking needed!**
+
           ## Installation
 
           Download the binary for your platform:

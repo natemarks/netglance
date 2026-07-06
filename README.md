@@ -17,6 +17,21 @@ A high-performance TCP connection monitoring tool with a beautiful terminal user
 - 🎯 **Simple controls** - Keyboard-driven interface with intuitive navigation
 - 📝 **Comprehensive logging** - Configurable log levels with file output
 
+## Requirements
+
+### Linux
+- Any modern Linux distribution (kernel 3.2+)
+- No specific GLIBC version required (statically-linked binary)
+- Tested on: Ubuntu 20.04+, Debian 11+, CentOS 7+, Alpine Linux
+
+### macOS
+- Apple Silicon (M1/M2/M3/M4)
+- macOS 11.0 (Big Sur) or later
+
+### For Building from Source
+- Rust 1.70 or later
+- Cargo
+
 ## Quick Start
 
 ### Installation
