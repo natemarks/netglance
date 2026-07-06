@@ -308,6 +308,70 @@ Security PRs are labeled with `security` and should be fast-tracked.
 
 ---
 
+## Git Pre-commit Hooks
+
+This project uses a custom git pre-commit hook that runs **both** gitleaks (secret scanning) and `make static` (format, lint, tests) before every commit.
+
+### Setup (First-time Contributors)
+
+```bash
+# Install the git hook
+make install-hooks
+
+# Install gitleaks (required)
+# macOS:
+brew install gitleaks
+
+# Linux: see https://github.com/gitleaks/gitleaks#installing
+```
+
+### What Runs on Every Commit
+
+The pre-commit hook (`.githooks/pre-commit`) runs:
+1. **Gitleaks** - Scans staged files for secrets
+2. **`make static`** - Runs format check, clippy, unit tests, and security audit
+
+Both must pass before the commit succeeds.
+
+### Configuration Files
+
+- `.githooks/pre-commit` - The actual hook script
+- `.gitleaksignore` - Patterns to ignore false positives
+- `.gitleaks.toml` - Custom gitleaks configuration
+
+### Manual Testing
+
+```bash
+# Test the hook manually
+make test-gitleaks          # Run gitleaks only
+make static                 # Run static analysis only
+```
+
+### Handling False Positives
+
+If gitleaks flags something that's not actually a secret:
+
+1. **Verify it's truly a false positive** (not a real secret!)
+2. Add to `.gitleaksignore` with the specific pattern shown in the error
+3. Document why it's safe with a comment
+
+Example `.gitleaksignore` entry:
+```
+# Safe: Example API key in documentation
+docs/examples/config.json:generic-api-key:42
+```
+
+### Bypassing the Hook
+
+If you need to bypass the hook (not recommended):
+```bash
+git commit --no-verify
+```
+
+Only use this for emergencies or if you're certain the failure is a false positive
+
+---
+
 ## Rust-Specific Considerations
 
 ### Toolchain Updates

@@ -154,7 +154,7 @@ ci: static integration-test ## Run all CI checks (static + integration tests)
 
 pre-commit: static ## Run pre-commit checks (same as static)
 
-install-hooks: ## Install git pre-commit hook (gitleaks)
+install-hooks: ## Install git pre-commit hook (gitleaks + make static)
 	@if ! command -v gitleaks > /dev/null 2>&1; then \
 		echo "⚠ Warning: gitleaks not installed"; \
 		echo ""; \
@@ -168,7 +168,7 @@ install-hooks: ## Install git pre-commit hook (gitleaks)
 	@mkdir -p .git/hooks
 	@cp .githooks/pre-commit .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
-	@echo "✓ Git pre-commit hook installed (gitleaks)"
+	@echo "✓ Git pre-commit hook installed (gitleaks + make static)"
 	@echo ""
 	@if command -v gitleaks > /dev/null 2>&1; then \
 		echo "✓ gitleaks is installed"; \
