@@ -6,11 +6,32 @@ This document explains how to handle Dependabot pull requests for the netglance 
 
 ## Quick Start
 
-For routine dependency updates that pass all checks:
+### List and Review PRs
 
 ```bash
-# Fast-track merge (after CI passes)
-gh pr merge <PR#> --squash
+# Show all open Dependabot PRs
+make list-dependabot-prs
+```
+
+### Test a Specific PR
+
+```bash
+# Checkout and test PR #123
+make test-dependabot-pr-full PR=123
+```
+
+### Merge a Tested PR
+
+```bash
+# Squash merge and cleanup
+make merge-dependabot-pr PR=123
+```
+
+### Bulk Operations (use with caution)
+
+```bash
+# Test and merge all PRs
+make merge-all-dependabot-prs
 ```
 
 ---
@@ -20,11 +41,11 @@ gh pr merge <PR#> --squash
 To validate a Dependabot PR on your machine:
 
 ```bash
-# Checkout the PR
-gh pr checkout <PR#>
-
-# Run all validation checks
+# Option 1: Test PR already checked out
 make test-dependabot-pr
+
+# Option 2: Checkout and test in one command
+make test-dependabot-pr-full PR=<PR#>
 ```
 
 This will:
@@ -35,6 +56,41 @@ This will:
    - Linting with Clippy (`cargo clippy`)
    - Unit tests (`cargo test --lib --bins`)
    - Integration tests (`cargo test --test '*'`)
+
+---
+
+## PR Management Workflow
+
+The Makefile provides automated targets for managing Dependabot PRs:
+
+### Available Targets
+
+1. **`make list-dependabot-prs`** - List all open Dependabot PRs with their numbers, titles, and update times
+2. **`make checkout-dependabot-pr PR=123`** - Checkout a specific PR branch
+3. **`make test-dependabot-pr-full PR=123`** - Checkout and test a PR in one command
+4. **`make merge-dependabot-pr PR=123`** - Merge a PR with squash and cleanup local branch
+5. **`make merge-all-dependabot-prs`** - Test and merge all open PRs (use with caution!)
+
+### Workflow Example
+
+```bash
+# Step 1: See what PRs are available
+make list-dependabot-prs
+
+# Step 2: Test a specific PR
+make test-dependabot-pr-full PR=123
+
+# Step 3: If tests pass, merge it
+make merge-dependabot-pr PR=123
+
+# Step 4: Return to main branch (automatic in merge target)
+```
+
+The merge target automatically:
+- Squashes all commits into one
+- Uses admin privileges to bypass branch protection rules
+- Cleans up the local PR branch after merge
+- Returns you to the main branch
 
 ---
 
@@ -292,12 +348,17 @@ Updates to `tokio` or other async runtime crates:
 ## Useful Commands
 
 ```bash
-# View Dependabot PR details
+# List all open Dependabot PRs
+make list-dependabot-prs
+
+# View specific PR details
 gh pr view <PR#>
 
 # Checkout and test PR
-gh pr checkout <PR#>
-make test-dependabot-pr
+make test-dependabot-pr-full PR=<PR#>
+
+# Merge a tested PR
+make merge-dependabot-pr PR=<PR#>
 
 # Check dependency tree
 cargo tree

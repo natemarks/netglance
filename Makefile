@@ -4,6 +4,7 @@ SHELL := /bin/bash
 .PHONY: test unit-test integration-test fmt fmt-check clippy clippy-basic doc static static-full ci pre-commit
 .PHONY: dead-code unused-deps audit deny bloat
 .PHONY: install-hooks uninstall-hooks test-gitleaks test-dependabot-pr
+.PHONY: list-dependabot-prs checkout-dependabot-pr test-dependabot-pr-full merge-dependabot-pr merge-all-dependabot-prs
 .PHONY: release tag-release _check-prerequisites _check-main-branch _check-git-clean _validate-semver _create-release-pr _extract-version
 
 .DEFAULT_GOAL := help
@@ -201,6 +202,62 @@ test-dependabot-pr: clean ## Test Dependabot PR (clean + all checks)
 	@echo ""
 	@echo "If all looks good, merge the PR:"
 	@echo "  gh pr merge <PR#> --squash"
+
+list-dependabot-prs: ## List all open Dependabot PRs
+	@echo "=== Open Dependabot PRs ==="
+	@gh pr list --author "app/dependabot" --state open --json number,title,headRefName,updatedAt \
+		--template '{{range .}}PR #{{.number}}: {{.title}} ({{.headRefName}}) - Updated: {{timeago .updatedAt}}{{"\n"}}{{end}}'
+	@echo ""
+	@echo "To test a PR: make test-dependabot-pr-full PR=<number>"
+	@echo "To merge a PR: make merge-dependabot-pr PR=<number>"
+
+checkout-dependabot-pr: ## Checkout a Dependabot PR (usage: make checkout-dependabot-pr PR=123)
+	@if [ -z "$(PR)" ]; then \
+		echo "❌ Error: PR number required. Usage: make checkout-dependabot-pr PR=123"; \
+		exit 1; \
+	fi
+	@echo "=== Checking out PR #$(PR) ==="
+	@gh pr checkout $(PR) --force
+	@echo "✓ Checked out PR #$(PR)"
+
+test-dependabot-pr-full: ## Checkout and test a Dependabot PR (usage: make test-dependabot-pr-full PR=123)
+	@if [ -z "$(PR)" ]; then \
+		echo "❌ Error: PR number required. Usage: make test-dependabot-pr-full PR=123"; \
+		exit 1; \
+	fi
+	@$(MAKE) checkout-dependabot-pr PR=$(PR)
+	@$(MAKE) test-dependabot-pr
+
+merge-dependabot-pr: ## Merge a Dependabot PR (usage: make merge-dependabot-pr PR=123)
+	@if [ -z "$(PR)" ]; then \
+		echo "❌ Error: PR number required. Usage: make merge-dependabot-pr PR=123"; \
+		exit 1; \
+	fi
+	@echo "=== Merging PR #$(PR) ==="
+	@BRANCH=$$(gh pr view $(PR) --json headRefName --jq '.headRefName'); \
+	gh pr merge $(PR) --squash --admin && \
+	echo "✓ PR #$(PR) merged successfully" && \
+	echo "=== Cleaning up local branch: $$BRANCH ===" && \
+	git checkout $$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@') && \
+	git branch -D $$BRANCH 2>/dev/null || echo "Branch already cleaned up" && \
+	echo "✓ Local cleanup complete"
+
+merge-all-dependabot-prs: ## Test and merge all open Dependabot PRs
+	@echo "=== Processing all Dependabot PRs ==="
+	@PRS=$$(gh pr list --author "app/dependabot" --state open --json number --jq '.[].number'); \
+	if [ -z "$$PRS" ]; then \
+		echo "No open Dependabot PRs found"; \
+		exit 0; \
+	fi; \
+	for pr in $$PRS; do \
+		echo ""; \
+		echo "========================================"; \
+		echo "Processing PR #$$pr"; \
+		echo "========================================"; \
+		$(MAKE) test-dependabot-pr-full PR=$$pr && \
+		$(MAKE) merge-dependabot-pr PR=$$pr || \
+		echo "❌ Failed to process PR #$$pr - skipping"; \
+	done
 
 ##@ Release
 
