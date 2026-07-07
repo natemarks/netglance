@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help all build build-debug build-release build-optimized run check clean clean-all
+.PHONY: help all build build-debug build-release build-optimized build-musl test-musl run check clean clean-all
 .PHONY: test unit-test integration-test fmt fmt-check clippy clippy-basic doc static static-full ci pre-commit
 .PHONY: dead-code unused-deps audit deny bloat
 .PHONY: install-hooks uninstall-hooks test-gitleaks test-dependabot-pr
@@ -38,6 +38,31 @@ build-optimized: ## Build with maximum optimizations
 	@RUSTFLAGS="-C target-cpu=native" $(CARGO) build --release
 	@strip target/release/$(PROJECT_NAME)
 	@echo "✓ Optimized binary: target/release/$(PROJECT_NAME)"
+
+build-musl: ## Build static musl binary for Linux (requires musl-tools)
+	@echo "Building static musl binary..."
+	@if ! command -v musl-gcc > /dev/null 2>&1 && ! command -v x86_64-linux-musl-gcc > /dev/null 2>&1; then \
+		echo "⚠ Warning: musl-tools not installed"; \
+		echo "Install: sudo apt-get install musl-tools"; \
+		exit 1; \
+	fi
+	@rustup target add x86_64-unknown-linux-musl 2>/dev/null || true
+	@NETGLANCE_ALLOW_DIRTY=1 $(CARGO) build --release --target x86_64-unknown-linux-musl
+	@echo "✓ Static binary: target/x86_64-unknown-linux-musl/release/$(PROJECT_NAME)"
+	@echo ""
+	@echo "Verifying static binary:"
+	@file target/x86_64-unknown-linux-musl/release/$(PROJECT_NAME)
+	@if ldd target/x86_64-unknown-linux-musl/release/$(PROJECT_NAME) 2>&1 | grep -q "statically linked"; then \
+		echo "✓ Binary is statically linked"; \
+	else \
+		echo "⚠ Warning: Binary has dynamic dependencies:"; \
+		ldd target/x86_64-unknown-linux-musl/release/$(PROJECT_NAME); \
+	fi
+
+test-musl: build-musl ## Build and test musl binary
+	@echo "Testing musl binary..."
+	@target/x86_64-unknown-linux-musl/release/$(PROJECT_NAME) --version
+	@echo "✓ musl binary runs successfully"
 
 run: ## Run the application
 	@$(CARGO) run
