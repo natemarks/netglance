@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336a9b35a  # stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336a9b35a  # stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@400e7407cfd7a091e5fbb6afec01ec146c432b7c  # v2.7.7
@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336a9b35a  # stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@400e7407cfd7a091e5fbb6afec01ec146c432b7c  # v2.7.7
